@@ -1,0 +1,46 @@
+<meta charset="utf-8">
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    let [iv, buf] = await enc(
+      `<style>
+  html {
+    background: url(kitten.jpg) no-repeat center center fixed;
+    background-size: cover;
+  }
+</style>`,
+      '12232015'
+    )
+    document.body.innerText =
+      '<code>' + uint8ToBin(iv) + '\u180e' + uint8ToBin(buf) + '</code>'
+  })
+
+  async function enc(pt, pw) {
+    let ptUtf8 = new TextEncoder().encode(pt)
+    let pwUtf8 = new TextEncoder().encode(pw)
+    let pwHash = await crypto.subtle.digest('SHA-256', pwUtf8)
+    let iv = crypto.getRandomValues(new Uint8Array(1024))
+    let alg = { name: 'AES-GCM', iv: iv }
+    let usg = ['encrypt']
+    let key = await crypto.subtle.importKey('raw', pwHash, alg, false, usg)
+    let buf = await crypto.subtle.encrypt(alg, key, ptUtf8)
+    return [iv, new Uint8Array(buf)]
+  }
+
+  function uint8ToBin(u) {
+    let s = JSON.stringify(u)
+    let b = utf8ToBin(s)
+    return b
+  }
+
+  function utf8ToBin(s) {
+    let b = ''
+    for (let i = 0; i < s.length; i++) {
+      let c = s.charCodeAt(i).toString(2)
+      while (c.length % 8 != 0) {
+        c = '0' + c
+      }
+      b += c
+    }
+    return b
+  }
+</script>
