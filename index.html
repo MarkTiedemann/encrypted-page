@@ -12,7 +12,7 @@
   async function dec(iv, buf, pw) {
     let pwUtf8 = new TextEncoder().encode(pw)
     let pwHash = await crypto.subtle.digest('SHA-256', pwUtf8)
-    let alg = { name: 'AES-GCM', iv: iv }
+    let alg = { name: 'AES-GCM', iv }
     let usg = ['decrypt']
     let key = await crypto.subtle.importKey('raw', pwHash, alg, false, usg)
     let ptBuffer = await crypto.subtle.decrypt(alg, key, buf.buffer)
@@ -35,7 +35,11 @@
     let s = ''
     for (let i = 0; i < b.length; i += 8) {
       let c = parseInt(b.substr(i, 8), 2).toString(16)
-      s += '%' + (c.length % 2 == 0 ? c : '0' + c)
+      if (c.length % 2 == 0) {
+        s += '%' + c
+      } else {
+        s += '%0' + c
+      }
     }
     return decodeURIComponent(s)
   }
